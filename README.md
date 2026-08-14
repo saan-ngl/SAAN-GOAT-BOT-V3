@@ -66,7 +66,7 @@
 
 ### 1️⃣ Clone the Environment
 ```bash
-git clone https://github.com/goatbotnx/GOAT-BOT-V3.git
+git clone https://github.com/saan-ngl/SAAN-GOAT-BOT-V3.git
 cd GOAT-BOT-V3
 ```
 

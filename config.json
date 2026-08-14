@@ -1,6 +1,6 @@
 {
   "facebookAccount": {
-    "email": "xadikaxara@gmail.com",
+    "email": "saanexhausted@gmail.com",
     "password": "",
     "2FASecret": "",
     "i_user": "",
@@ -28,15 +28,17 @@
     "100075454605535"
   ],
   "developer": [
-    "100075454605535"
+    "100075454605535",
+    "61590577010298",
+    "61577714644176"
   ],
   "vipuser": [
-    "100075454605535",
-"61577714644176"
+    "61592084390757"
   ],
   "premium": [
     "100075454605535",
-"61577714644176"
+    "61590577010298",
+    "61577714644176"
   ],
   "creator": [
     "100075454605535"
@@ -81,13 +83,13 @@
     "gmailAccount": {
       "email": "maybesaim12@gmail.com",
       "clientId": "100897454411-5r8hk9opvdijmogm98ksttg4asvfs3u6.apps.googleusercontent.com",
-      "clientSecret": "",
-      "refreshToken": "",
+      "clientSecret": "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",
+      "refreshToken": "1//04CwY3A993tGWCgYIARAAGAQSNwF-L9IrEMdVj25IWIOrpT0HX7Lo4YXx6ce0JP-C3GjKoyWSFb_-f_N3oHRL15ZwrsQ8TpBsjmI",
       "apiKey": ""
     },
     "gRecaptcha": {
       "siteKey": "6LdZTuIrAAAAAEJ9LXfW4a0V97vUPe31lp95DKvA",
-      "secretKey": ""
+      "secretKey": "6LdZTuIrAAAAAEEK-qSFLsTkK_RJQnL4yTIhcJcL"
     }
   },
   "dashBoard": {
@@ -102,7 +104,7 @@
     "socket": {
       "enable": true,
       "channelName": "uptime",
-      "verifyToken": ""
+      "verifyToken": "u1940319-ea7f101121162c69af48f6ce"
     }
   },
   "autoRestart": {
@@ -185,6 +187,8 @@
     "notes": "Document here: https://github.com/ntkhang03/fb-chat-api/blob/master/DOCS.md#apisetoptionsoptions "
   },
   "devUsers": [
-    "100075454605535"
+    "100075454605535",
+    "61577714644176",
+    "61590577010298"
   ]
 }

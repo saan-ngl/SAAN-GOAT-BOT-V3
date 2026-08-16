@@ -1,136 +1,175 @@
 module.exports = {
-  config: {
-    name: "slot",
-    version: "7.5",
-    author: "Siam Ahmed Saan ",
-    role: 0,
-    countDown: 5,
-    category: "GAMES",
-    guide: {
-      en: "{pn} <amount>"
+    config: {
+        name: "slot",
+        version: "7.2",
+        author: "Saan Exhausted",
+        role: 0,
+        countDown: 13,
+        category: "game",
+        guide: {
+            en: "{pn} <amount>"
+        }
+    },
+
+    onStart: async ({ message, event, args, usersData }) => {
+
+        const { senderID } = event;
+
+        if (!global.slotCooldown)
+            global.slotCooldown = {};
+
+        if (
+            global.slotCooldown[senderID] &&
+            Date.now() - global.slotCooldown[senderID] < 15000
+        ) {
+            return message.reply("⏱️ Please wait 15 seconds before playing again.");
+        }
+
+        global.slotCooldown[senderID] = Date.now();
+
+        const formatMoney = (num) => {
+            const n = Number(num);
+            if (n < 1000) return n.toFixed(0);
+
+            const units = [
+                { v: 1e12, s: "T" },
+                { v: 1e9, s: "B" },
+                { v: 1e6, s: "M" },
+                { v: 1e3, s: "K" }
+            ];
+
+            for (let i = 0; i < units.length; i++) {
+                if (n >= units[i].v) {
+                    return (n / units[i].v)
+                        .toFixed(2)
+                        .replace(/\.00$/, '') + units[i].s;
+                }
+            }
+            return n.toLocaleString();
+        };
+
+        function parseAmount(input) {
+            if (!input) return NaN;
+
+            let amount = input.toLowerCase();
+
+            if (amount.endsWith('k')) return parseFloat(amount) * 1e3;
+            if (amount.endsWith('m')) return parseFloat(amount) * 1e6;
+            if (amount.endsWith('b')) return parseFloat(amount) * 1e9;
+
+            return parseInt(amount);
+        }
+
+        const betAmount = parseAmount(args[0]);
+
+        const minBet = 100;
+        const maxBet = 20000000;
+
+        if (isNaN(betAmount) || betAmount < minBet) {
+            return message.reply(`🎰 Minimum bet is 100$\nExample: /slot 1k`);
+        }
+
+        if (betAmount > maxBet) {
+            return message.reply(`🚫 Maximum bet limit is ${formatMoney(maxBet)}$`);
+        }
+
+        const userData = await usersData.get(senderID);
+        const currentMoney = Number(userData.money || 0);
+
+        if (betAmount > currentMoney) {
+            return message.reply(`💸 Not enough balance!\nBalance: ${formatMoney(currentMoney)}$`);
+        }
+
+        // 🔥 12 hour limit system (NOW 10)
+        if (!global.slotLimit)
+            global.slotLimit = {};
+
+        const now = Date.now();
+
+        if (
+            !global.slotLimit[senderID] ||
+            (now - global.slotLimit[senderID].lastReset > 43200000)
+        ) {
+            global.slotLimit[senderID] = {
+                count: 0,
+                lastReset: now
+            };
+        }
+
+        if (global.slotLimit[senderID].count >= 10) {
+            return message.reply(
+                `🚫 You reached the maximum slot limit!\n⏳ Try again after 12 hours.`
+            );
+        }
+
+        global.slotLimit[senderID].count++;
+
+        const items = ["🍎","🍐","🍑","🍒","🍓","🍇","🍉","🍊","🍋","🍌"];
+
+        const slots = Array.from(
+            { length: 6 },
+            () => items[Math.floor(Math.random() * items.length)]
+        );
+
+        // 🎰 WIN RATE REDUCED (40%)
+        const chance = Math.random() * 100;
+
+        if (chance <= 40) {
+            const lucky = items[Math.floor(Math.random() * items.length)];
+
+            slots[0] = lucky;
+            slots[1] = lucky;
+            slots[2] = lucky;
+
+            if (Math.random() < 0.25) slots[3] = lucky;
+            if (Math.random() < 0.08) slots[4] = lucky;
+        }
+
+        const counts = {};
+        slots.forEach(item => {
+            counts[item] = (counts[item] || 0) + 1;
+        });
+
+        const maxMatch = Math.max(...Object.values(counts));
+
+        const win = maxMatch >= 3;
+
+        // 💰 FIXED 2X SYSTEM
+        let multiplier = 0;
+        if (maxMatch >= 3) multiplier = 2;
+
+        const reward = win
+            ? Math.floor(betAmount * multiplier)
+            : 0;
+
+        let finalMoney = win
+            ? currentMoney - betAmount + reward
+            : currentMoney - betAmount;
+
+        // small refund chance
+        if (!win && Math.random() < 0.20) {
+            finalMoney += Math.floor(betAmount * 0.25);
+        }
+
+        await usersData.set(senderID, {
+            money: finalMoney.toString()
+        });
+
+        return message.reply(
+`🎰 | SLOT MACHINE
+━━━━━━━━━━━━━━
+[ ${slots.join(" | ")} ]
+━━━━━━━━━━━━━━
+
+${win
+? `🎉 WINNER (${maxMatch} Match)
+💰 Won: ${formatMoney(reward)}$ (2x)`
+: `💀 LOST
+💸 Lost: ${formatMoney(betAmount)}$`
+}
+
+💳 Balance: ${formatMoney(finalMoney)}$
+📊 Usage: ${global.slotLimit[senderID].count}/10`
+        );
     }
-  },
-
-  onStart: async ({ message, event, args, usersData, api }) => {
-    const { senderID, threadID } = event;
-
-    const formatMoney = (num) => {
-      const n = Number(num);
-      if (n === Infinity || isNaN(n)) return "∞";
-      if (n < 1000) return n.toFixed(0);
-      const units = [
-        { v: 1e12, s: "T" },
-        { v: 1e9, s: "B" },
-        { v: 1e6, s: "M" },
-        { v: 1e3, s: "K" }
-      ];
-      for (let u of units) {
-        if (n >= u.v)
-          return (n / u.v).toFixed(2).replace(/\.00$/, "") + u.s;
-      }
-      return n.toLocaleString();
-    };
-
-    function parseAmount(input) {
-      if (!input) return NaN;
-      let a = input.toLowerCase();
-      if (a.endsWith("k")) return parseFloat(a) * 1e3;
-      if (a.endsWith("m")) return parseFloat(a) * 1e6;
-      if (a.endsWith("b")) return parseFloat(a) * 1e9;
-      if (a.endsWith("t")) return parseFloat(a) * 1e12;
-      return parseInt(a);
-    }
-
-    const betAmount = parseAmount(args[0]);
-    const minBet = 100;
-    const maxBet = 100000000000;
-
-    if (isNaN(betAmount) || betAmount < minBet) {
-      return message.reply(`🎰 Minimum bet is 100$\nExample: /slot 1k`);
-    }
-
-    if (betAmount > maxBet) {
-      return message.reply(`🚫 Max bet: ${formatMoney(maxBet)}$`);
-    }
-
-    let userData = await usersData.get(senderID);
-    if (!userData) {
-      userData = { money: 0 };
-    }
-    const currentMoney = Number(userData.money || 0);
-
-    if (betAmount > currentMoney) {
-      return message.reply(`💸 Not enough balance!\nBalance: ${formatMoney(currentMoney)}$`);
-    }
-
-    if (!global.slotLimit) global.slotLimit = {};
-    const now = Date.now();
-    if (!global.slotLimit[senderID] || (now - global.slotLimit[senderID].lastReset > 3600000)) {
-      global.slotLimit[senderID] = { count: 0, lastReset: now };
-    }
-
-    const maxSpins = 100;
-    if (global.slotLimit[senderID].count >= maxSpins) {
-      return message.reply(`🚫 Daily limit reached (${maxSpins} spins)`);
-    }
-
-    const items = ["🍎","🍐","🍑","🍒","🍓","🍇","🍉","🍊","🍋","🍌","🍍","🥭"];
-    let s = [];
-
-    const winRoll = Math.random() * 100;
-    let forceMatch = 0;
-
-    if (winRoll <= 10) forceMatch = 4;
-    else if (winRoll <= 25) forceMatch = 3;
-    else if (winRoll <= 45) forceMatch = 2;
-
-    if (forceMatch > 0) {
-      const luckyItem = items[Math.floor(Math.random() * items.length)];
-      s = Array(4).fill(null).map((_, i) =>
-        i < forceMatch ? luckyItem : items[Math.floor(Math.random() * items.length)]
-      );
-      s = s.sort(() => Math.random() - 0.5);
-    } else {
-      s = Array.from({ length: 4 }, () =>
-        items[Math.floor(Math.random() * items.length)]
-      );
-    }
-
-    global.slotLimit[senderID].count++;
-
-    const sent = await message.reply(
-      `🎰 | SLOT MACHINE\n──────────────\n [ ❓ | ❓ | ❓ | ❓ ]\n──────────────\n⌛ Spinning...`
-    );
-
-    await new Promise(r => setTimeout(r, 1000));
-
-    await api.editMessage(
-      `🎰 | SLOT MACHINE\n──────────────\n [ ${s[0]} | ${s[1]} | ❓ | ❓ ]\n──────────────\n⌛ Spinning...`,
-      sent.messageID
-    );
-
-    await new Promise(r => setTimeout(r, 1000));
-
-    const counts = {};
-    s.forEach(i => counts[i] = (counts[i] || 0) + 1);
-    const maxMatch = Math.max(...Object.values(counts));
-
-    const win = maxMatch >= 2;
-
-    let multiplier = 0;
-    if (maxMatch === 4) multiplier = 4;
-    else if (maxMatch === 3) multiplier = 2;
-    else if (maxMatch === 2) multiplier = 1;
-
-    const bonus = win ? betAmount * multiplier : 0;
-    const finalMoney = win ? currentMoney + bonus : currentMoney - betAmount;
-
-    userData.money = finalMoney;
-    await usersData.set(senderID, userData);
-
-    const status = win ? `WIN ${multiplier}x 🎉` : "LOSE 💀";
-    const resultMessage = `🎰 | SLOT MACHINE\n──────────────\n [ ${s.join(" | ")} ]\n──────────────\n📢 ${status}\n💰 ${win ? "Won: " + formatMoney(bonus) : "Lost: " + formatMoney(betAmount)}$\n💳 Balance: ${formatMoney(finalMoney)}$\n📊 Usage: ${global.slotLimit[senderID].count}/${maxSpins}`;
-
-    await api.editMessage(resultMessage, sent.messageID);
-  }
 };
